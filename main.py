@@ -2,18 +2,18 @@ import pandas as pd
 import functions
 import config
 
-main_df= pd.read_excel('excel_table.xlsx', skiprows=0, header=1)
+main_df= pd.read_excel('excel_table.xlsx')
 main_df.columns = ['name', 'id', 'cpf', 'email', 'password', 'cred_lim', 'bal']
 
 print("Bem-vindo ao sistema de gerenciamento de clientes!")
 name= input('Digite o nome do cliente: ')
 password= input('Digite a senha do cliente: ')
 
-name_exists= not main_df[main_df['name'] == name].empty
-password_matches= not main_df[(main_df['name'] == name) & (main_df['password'] == password)].empty
+check1= main_df.loc[main_df['name'] == name, 'password']
+print(check1.values[0])
 
-if name_exists and password_matches:
-    user_row= main_df.loc[(main_df['name'] == name) & (main_df['password'] == password)]
+if check1.values[0].astype(str) == password:
+    user_row= main_df.loc[(main_df['name'] == name)]
     balance= user_row['bal'].values[0]
     print(f"Bem-vindo, {name}! Seu saldo atual é: R${balance:.2f}")
 
@@ -38,7 +38,4 @@ if name_exists and password_matches:
         main_df.loc[(main_df['name'] == name) & (main_df['password'] == password), 'bal'] = balance
         main_df.to_excel('excel_table.xlsx', index=False)
 else:
-    if not name_exists:
-        print("Nome não encontrado.")
-    elif not password_matches:
-        print("Senha incorreta.")
+    print("Nome ou senha incorretos.")
