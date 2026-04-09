@@ -1,41 +1,35 @@
 import pandas as pd
-import functions
+import functions as func
 import config
 
 main_df= pd.read_excel('excel_table.xlsx')
 main_df.columns = ['name', 'id', 'cpf', 'email', 'password', 'cred_lim', 'bal']
+amount=0
 
 print("Bem-vindo ao sistema de gerenciamento de clientes!")
-name= input('Digite o nome do cliente: ')
-password= input('Digite a senha do cliente: ')
 
-check1= main_df.loc[main_df['name'] == name, 'password']
-print(check1.values[0])
+while True:
+    name= input('Digite o nome do cliente: ')
+    password= input('Digite a senha do cliente: ')
+    check1= main_df.loc[main_df['name'] == name, 'password']
 
-if check1.values[0].astype(str) == password:
-    user_row= main_df.loc[(main_df['name'] == name)]
-    balance= user_row['bal'].values[0]
-    print(f"Bem-vindo, {name}! Seu saldo atual é: R${balance:.2f}")
+    if check1.empty:
+        print("Nome ou senha incorretos.\nTente novamente.")
+        continue
 
-    action= input("Digite 'sacar' para realizar um saque ou 'depositar' para realizar um depósito: ").strip().lower()
+    if check1.values[0].astype(str) == password:
+        user_row= main_df.loc[(main_df['name'] == name)]
+        balance= user_row['bal'].values[0]
+        break
+    else:
+        print("Nome ou senha incorretos.\nTente novamente.\n")
 
-    if action == 'sacar':
-        amount= float(input("Digite o valor a ser sacado: "))
-        if amount > balance:
-            print("Saldo insuficiente para realizar o saque.")
-        else:
-            balance -= amount
-            main_df.loc[user_row.index, 'bal'] = balance
-            print(f"Saque realizado com sucesso! Seu novo saldo é: R${balance:.2f}")
-        main_df.loc[(main_df['name'] == name) & (main_df['password'] == password), 'bal'] = balance
-        main_df.to_excel('excel_table.xlsx', index=False)
+    
+print(f"Bem-vindo, {name}! Seu saldo atual é: R${balance:.2f}")
 
-    elif action == 'depositar':
-        amount= float(input("Digite o valor a ser depositado: "))
-        balance += amount
-        main_df.loc[user_row.index, 'bal'] = balance
-        print(f"Depósito realizado com sucesso! Seu novo saldo é: R${balance:.2f}")
-        main_df.loc[(main_df['name'] == name) & (main_df['password'] == password), 'bal'] = balance
-        main_df.to_excel('excel_table.xlsx', index=False)
-else:
-    print("Nome ou senha incorretos.")
+action= input("Digite\nSacar: para realizar um saque\nDepositar: para realizar um depósito\n\n").strip().lower()
+
+if action == 'sacar':
+    func.withdraw(amount, balance, main_df, user_row, name)
+elif action == 'depositar':
+    func.deposit(amount, balance, main_df, user_row, name)
