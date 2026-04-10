@@ -10,7 +10,7 @@ def withdraw(a, b, c, d, name):#Função para realizar o saque
         c.loc[d.index, 'bal'] = b
         print(f"Saque realizado com sucesso! Seu novo saldo é: R${b:.2f}")
         c.loc[(c['name'] == name), 'bal'] = b
-        c.to_excel('excel_table.xlsx', index=False)
+        c.to_excel(cfg.m_EXCEL_path, index=False)
 
 def deposit(a, b, c, d, name):#Função para realizar o depósito
         a= float(input("Digite o valor a ser depositado: "))
@@ -18,7 +18,7 @@ def deposit(a, b, c, d, name):#Função para realizar o depósito
         c.loc[d.index, 'bal'] = b
         print(f"Depósito realizado com sucesso! Seu novo saldo é: R${b:.2f}")
         c.loc[(c['name'] == name), 'bal'] = b
-        c.to_excel('excel_table.xlsx', index=False)
+        c.to_excel(cfg.m_EXCEL_path, index=False)
 
 def login(main_df):#Função para realizar o login do cliente
     while True:

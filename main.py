@@ -2,7 +2,7 @@ import pandas as pd
 import functions as fn
 import config as cfg
 
-main_df= pd.read_excel('excel_table.xlsx')
+main_df= pd.read_excel(cfg.m_EXCEL_path)
 main_df.columns = ['name', 'id', 'cpf', 'email', 'password', 'cred_lim', 'bal']
 amount=0
 
