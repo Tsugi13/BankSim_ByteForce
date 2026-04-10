@@ -21,22 +21,21 @@ def deposit(a, b, c, d, name):#Função para realizar o depósito
         c.to_excel(cfg.m_EXCEL_path, index=False)
 
 def login(main_df):#Função para realizar o login do cliente
-    while True:
-        name= input('Digite o nome do cliente: ')
-        password= input('Digite a senha do cliente: ')
-        check1= main_df.loc[main_df['name'] == name, 'password']
+    name= input('Digite o nome do cliente: ')
+    password= input('Digite a senha do cliente: ')
+    check1= main_df.loc[main_df['name'] == name, 'password']
 
-        if check1.empty:
-            print("Nome ou senha incorretos.\nTente novamente.")
-            continue
+    if check1.empty:
+        print("Nome ou senha incorretos.\nTente novamente.")
+        return None, None, None
 
-        if str(check1.values[0]) == password:
-            user_row= main_df.loc[(main_df['name'] == name)]
-            balance= user_row['bal'].values[0]
-            return name, balance, user_row
-            
-        else:
-            print("Nome ou senha incorretos.\nTente novamente.\n")
+    if str(check1.values[0]) == password:
+        user_row= main_df.loc[(main_df['name'] == name)]
+        balance= user_row['bal'].values[0]
+        return name, balance, user_row
+    else:
+        print("Nome ou senha incorretos.\nTente novamente.\n")
+        return None, None, None
 
 def get_next_id(main_df):#Função para obter o próximo ID disponível
     if main_df.empty:

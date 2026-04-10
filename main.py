@@ -4,7 +4,6 @@ import config as cfg
 
 main_df= pd.read_excel(cfg.m_EXCEL_path)
 main_df.columns = ['name', 'id', 'cpf', 'email', 'password', 'cred_lim', 'bal']
-amount=0
 
 print("Bem-vindo ao sistema de gerenciamento de clientes!")
 print("Login/Criação de conta?\n")
@@ -16,13 +15,21 @@ while True:
         continue
     else:
         name, balance, user_row = fn.login(main_df)
-        break
-    
+        if name and balance and user_row is not None:
+            break
+        else:
+            continue
+
 print(f"Bem-vindo, {name}! Seu saldo atual é: R${balance:.2f}")
+while True:
+    action= input("Digite:\nSacar: para realizar um saque\nDepositar: para realizar um depósito\nSair: para sair\n\n").strip().lower()
 
-action= input("Digite:\n\nSacar: para realizar um saque\nDepositar: para realizar um depósito\n\n").strip().lower()
-
-if action == 'sacar':
-    fn.withdraw(amount, balance, main_df, user_row, name)
-elif action == 'depositar':
-    fn.deposit(amount, balance, main_df, user_row, name)
+    if action == 'sacar':
+        fn.withdraw(cfg.base_amount, balance, main_df, user_row, name)
+        continue
+    elif action == 'depositar':
+        fn.deposit(cfg.base_amount, balance, main_df, user_row, name)
+        continue
+    elif action == 'sair':
+        print("Obrigado por usar o sistema de gerenciamento de clientes. Até logo!")
+        break
