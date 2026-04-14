@@ -15,10 +15,10 @@ while True:
         continue
     else:
         name, balance, user_row = fn.login(main_df)
-        if name and balance and user_row is not None:
-            break
-        else:
+        if name and balance and user_row is None:
             continue
+        else:
+            break
 
 print(f"Bem-vindo, {name}! Seu saldo atual é: R${balance:.2f}")
 while True:

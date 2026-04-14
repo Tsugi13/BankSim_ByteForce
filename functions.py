@@ -54,7 +54,7 @@ def create_account(df):#Função para criar uma nova conta de cliente
         name = input("Nome: ").strip()
         cpf = input("CPF: ").strip()
         email = input("Email: ").strip()
-        password = input("Senha: ").strip()
+        password = str(input("Senha: ").strip())
 
         cpf_exists, email_exists = user_exists(df, cpf, email)
 
