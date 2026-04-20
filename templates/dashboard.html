@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NovoBanco — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0c0e0f;
+      --panel:     #13161a;
+      --panel2:    #181c20;
+      --border:    #222628;
+      --gold:      #c9a84c;
+      --gold-dim:  #8a6e2f;
+      --text:      #e8e0d0;
+      --muted:     #7a7670;
+      --error-bg:  #1f1208;
+      --error:     #e07a3a;
+      --success-bg:#081a0f;
+      --success:   #4caf82;
+      --withdraw:  #e07a3a;
+      --deposit:   #4caf82;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(201,168,76,0.05) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand::before {
+      content: '';
+      display: inline-block;
+      width: 20px; height: 1px;
+      background: var(--gold);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-user {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .btn-logout {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 7px 16px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-logout:hover { color: var(--text); border-color: var(--muted); }
+
+    /* ── Main layout ── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .page-header {
+      margin-bottom: 40px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .greeting {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 42px;
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .greeting span { color: var(--gold); }
+
+    .page-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── Flash messages ── */
+    .flash-stack { margin-bottom: 28px; animation: fadeUp 0.4s ease both; }
+    .flash {
+      padding: 11px 16px;
+      font-size: 13px;
+      border-left: 2px solid;
+      margin-bottom: 8px;
+    }
+    .flash.error   { background: var(--error-bg);   color: var(--error);   border-color: var(--error);   }
+    .flash.success { background: var(--success-bg); color: var(--success); border-color: var(--success); }
+
+    /* ── Balance card ── */
+    .balance-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 36px 40px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+
+    .balance-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .balance-label {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .balance-amount {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 56px;
+      font-weight: 300;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .balance-amount .currency {
+      font-size: 24px;
+      color: var(--gold);
+      vertical-align: super;
+      margin-right: 4px;
+      font-weight: 400;
+    }
+
+    .balance-id {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+
+    /* ── Action cards grid ── */
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+
+    @media (max-width: 560px) {
+      .actions { grid-template-columns: 1fr; }
+      nav { padding: 16px 20px; }
+      main { padding: 32px 16px 60px; }
+      .balance-card { padding: 28px 24px; }
+      .balance-amount { font-size: 40px; }
+      .greeting { font-size: 32px; }
+    }
+
+    .action-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 28px 28px 24px;
+      position: relative;
+    }
+
+    .action-card .accent-line {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .action-card.withdraw .accent-line { background: linear-gradient(90deg, transparent, var(--withdraw), transparent); }
+    .action-card.deposit  .accent-line { background: linear-gradient(90deg, transparent, var(--deposit),  transparent); }
+
+    .action-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 400;
+      margin-bottom: 4px;
+    }
+
+    .action-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 22px;
+    }
+
+    .input-wrap { position: relative; margin-bottom: 16px; }
+
+    .input-wrap span {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px 12px 32px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-wrap input:focus { border-color: var(--gold-dim); }
+    .input-wrap input::placeholder { color: var(--muted); }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn:hover  { opacity: 0.88; }
+    .btn:active { transform: scale(0.99); }
+
+    .btn-withdraw { background: var(--withdraw); color: #0c0e0f; }
+    .btn-deposit  { background: var(--deposit);  color: #0c0e0f; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="brand">NovoBanco</div>
+    <div class="nav-right">
+      <span class="nav-user">{{ user.name }}</span>
+      <a class="btn-logout" href="/logout">Sair</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1 class="greeting">Olá, <span>{{ user.name.split()[0] }}</span>.</h1>
+      <p class="page-sub">Aqui está o resumo da sua conta.</p>
+    </div>
+
+    {% if get_flashed_messages() %}
+    <div class="flash-stack">
+      {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Balance -->
+    <div class="balance-card">
+      <div class="balance-label">Saldo disponível</div>
+      <div class="balance-amount">
+        <span class="currency">R$</span>{{ "%.2f"|format(user.bal) }}
+      </div>
+      <div class="balance-id">Conta #{{ "%04d"|format(user.id) }}</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+
+      <!-- Withdraw -->
+      <div class="action-card withdraw">
+        <div class="accent-line"></div>
+        <div class="action-title">Sacar</div>
+        <p class="action-sub">Retire fundos da sua conta.</p>
+        <form method="POST" action="/withdraw">
+          <div class="input-wrap">
+            <span>R$</span>
+            <input type="number" name="amount" placeholder="0,00" min="0.01" step="0.01" required />
+          </div>
+          <button class="btn btn-withdraw" type="submit">Confirmar Saque</button>
+        </form>
+      </div>
+
+      <!-- Deposit -->
+      <div class="action-card deposit">
+        <div class="accent-line"></div>
+        <div class="action-title">Depositar</div>
+        <p class="action-sub">Adicione fundos à sua conta.</p>
+        <form method="POST" action="/deposit">
+          <div class="input-wrap">
+            <span>R$</span>
+            <input type="number" name="amount" placeholder="0,00" min="0.01" step="0.01" required />
+          </div>
+          <button class="btn btn-deposit" type="submit">Confirmar Depósito</button>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

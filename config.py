@@ -1,6 +1,6 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-m_EXCEL_path=os.path.join(BASE_DIR, 'excel_table.xlsx')
+DB_PATH = os.path.join(BASE_DIR, 'bank.db')
 
-base_amount=0
+base_amount = 0

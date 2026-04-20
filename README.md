@@ -4,10 +4,10 @@ Esse aplicativo, baseado em Python, é um simulador de um sistema de um banco (c
 
 Os objetivos do aplicativo são:
 
-* WebGUI Responsiva
+* WebGUI Responsiva ⌛
 * Segurança contra fraudes 
 * Sistema de saque e depósito ✅
-* Um site hospedado (pode até ser por LAN)
-* Utilização em máquinas diferentes
+* Um site hospedado (pode até ser por LAN) ✅
+* Utilização em máquinas diferentes ✅
 * Código completamente comentado ⌛
-* Modularização de código entre arquivos ⌛
+* Modularização de código entre arquivos ✅
