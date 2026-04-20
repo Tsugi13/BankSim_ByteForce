@@ -17,8 +17,12 @@ Instruções:
 
 Inicie o servidor com `python app.py`
 O servidor iniciará e lhe dará o código de IP para acessar o site
-  Ex:
+
+Ex:
   >Running on all addresses (0.0.0.0)
+
   >Running on http://0.0.0.0:5000
+
   >Running on http://000.000.0.000:5000
 
+E então, acesse o site em questão, para checar o protótipo
