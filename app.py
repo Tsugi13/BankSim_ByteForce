@@ -1,51 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-import sqlite3
-import os
+from flask import (Flask, render_template, request, redirect,
+                   url_for, session, flash, jsonify)
+from brasil_geo import get_states, get_cities, get_coords
+import func as fn
 
 app = Flask(__name__)
-app.secret_key = 'chave_super-secreta'
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH  = os.path.join(BASE_DIR, 'bank.db')
+app.secret_key = 'senha_super_secreta'
 
 
-# ── DB helpers ────────────────────────────────────────────────────────────────
-
-def get_connection():
-    return sqlite3.connect(DB_PATH)
-
-def init_db():
-    with get_connection() as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS clients (
-                id       INTEGER PRIMARY KEY AUTOINCREMENT,
-                name     TEXT    NOT NULL,
-                cpf      TEXT    NOT NULL UNIQUE,
-                email    TEXT    NOT NULL UNIQUE,
-                password TEXT    NOT NULL,
-                cred_lim REAL    DEFAULT 0.0,
-                bal      REAL    DEFAULT 0.0
-            )
-        """)
-        conn.commit()
-
-def get_user(name):
-    with get_connection() as conn:
-        row = conn.execute(
-            "SELECT id, name, bal, cred_lim FROM clients WHERE name = ?", (name,)
-        ).fetchone()
-    if row:
-        return {'id': row[0], 'name': row[1], 'bal': row[2], 'cred_lim': row[3]}
-    return None
-
-
-# ── Routes ────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# AUTH
+# ─────────────────────────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
-    if 'user' in session:
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+    return redirect(url_for('dashboard') if 'user' in session else url_for('login'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -53,16 +21,12 @@ def login():
     if request.method == 'POST':
         name     = request.form.get('name', '').strip()
         password = request.form.get('password', '').strip()
-        with get_connection() as conn:
-            row = conn.execute(
-                "SELECT name FROM clients WHERE name = ? AND password = ?",
-                (name, password)
-            ).fetchone()
-        if row:
-            session['user'] = row[0]
+
+        if fn.get_user_by_credentials(name, password):
+            session['user'] = name
             return redirect(url_for('dashboard'))
-        else:
-            flash('Nome ou senha incorretos.', 'error')
+        flash('Nome ou senha incorretos.', 'error')
+
     return render_template('login.html')
 
 
@@ -74,33 +38,30 @@ def register():
         email    = request.form.get('email', '').strip()
         password = request.form.get('password', '').strip()
 
-        with get_connection() as conn:
-            cpf_exists   = conn.execute("SELECT 1 FROM clients WHERE cpf   = ?", (cpf,)).fetchone()
-            email_exists = conn.execute("SELECT 1 FROM clients WHERE email = ?", (email,)).fetchone()
-
-        if cpf_exists:
-            flash('CPF já cadastrado.', 'error')
-        elif email_exists:
-            flash('Email já cadastrado.', 'error')
-        else:
-            with get_connection() as conn:
-                conn.execute(
-                    "INSERT INTO clients (name, cpf, email, password, cred_lim, bal) VALUES (?,?,?,?,?,?)",
-                    (name, cpf, email, password, 0.0, 0.0)
-                )
-                conn.commit()
+        success, error = fn.register_user(name, cpf, email, password)
+        if success:
             flash('Conta criada com sucesso! Faça login.', 'success')
             return redirect(url_for('login'))
+        flash(error, 'error')
 
     return render_template('register.html')
 
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DASHBOARD
+# ─────────────────────────────────────────────────────────────────────────────
 
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
-    user = get_user(session['user'])
-    return render_template('dashboard.html', user=user)
+    return render_template('dashboard.html', user=fn.get_user(session['user']))
 
 
 @app.route('/withdraw', methods=['POST'])
@@ -113,18 +74,8 @@ def withdraw():
         flash('Valor inválido.', 'error')
         return redirect(url_for('dashboard'))
 
-    name = session['user']
-    with get_connection() as conn:
-        row = conn.execute("SELECT bal FROM clients WHERE name = ?", (name,)).fetchone()
-        if row and amount <= row[0]:
-            conn.execute("UPDATE clients SET bal = bal - ? WHERE name = ?", (amount, name))
-            conn.commit()
-            flash(f'Saque de R${amount:.2f} realizado com sucesso!', 'success')
-        elif row and amount > row[0]:
-            flash('Saldo insuficiente.', 'error')
-        else:
-            flash('Usuário não encontrado.', 'error')
-
+    success, message = fn.do_withdraw(session['user'], amount)
+    flash(message, 'success' if success else 'error')
     return redirect(url_for('dashboard'))
 
 
@@ -138,27 +89,112 @@ def deposit():
         flash('Valor inválido.', 'error')
         return redirect(url_for('dashboard'))
 
-    if amount <= 0:
-        flash('O valor deve ser maior que zero.', 'error')
-        return redirect(url_for('dashboard'))
-
-    name = session['user']
-    with get_connection() as conn:
-        conn.execute("UPDATE clients SET bal = bal + ? WHERE name = ?", (amount, name))
-        conn.commit()
-    flash(f'Depósito de R${amount:.2f} realizado com sucesso!', 'success')
+    success, message = fn.do_deposit(session['user'], amount)
+    flash(message, 'success' if success else 'error')
     return redirect(url_for('dashboard'))
 
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
+# ─────────────────────────────────────────────────────────────────────────────
+# CHECKOUT
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route('/checkout', methods=['GET', 'POST'])
+def checkout():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    user   = fn.get_user(session['user'])
+    states = get_states()
+
+    if request.method == 'POST':
+        product    = request.form.get('product', '').strip()
+        vendor     = request.form.get('vendor', '').strip()
+        cost_str   = request.form.get('cost', '').strip()
+        state_code = request.form.get('state', '').strip()
+        city_name  = request.form.get('city', '').strip()
+
+        if not all([product, vendor, cost_str, state_code, city_name]):
+            flash('Preencha todos os campos.', 'error')
+            return render_template('checkout.html', user=user, states=states)
+
+        try:
+            cost = float(cost_str)
+            if cost <= 0:
+                raise ValueError
+        except ValueError:
+            flash('Custo inválido.', 'error')
+            return render_template('checkout.html', user=user, states=states)
+
+        if cost > user['bal']:
+            flash('Saldo insuficiente para realizar esta compra.', 'error')
+            return render_template('checkout.html', user=user, states=states)
+
+        coords = get_coords(state_code, city_name)
+        if not coords:
+            flash('Localização inválida.', 'error')
+            return render_template('checkout.html', user=user, states=states)
+
+        lat, lng = coords
+
+        is_fraud, dist_km, worst = fn.check_fraud(user['id'], lat, lng)
+        if is_fraud:
+            fn.do_flag_account(user['id'])
+            flash(
+                f'⚠ Compra bloqueada por suspeita de fraude. '
+                f'Distância detectada: {dist_km} km da última localização conhecida '
+                f'({worst["city"]}, {worst["state"]} em {worst["purchased_at"]}). '
+                f'Sua conta foi sinalizada. Entre em contato com o suporte.',
+                'error'
+            )
+            return render_template('checkout.html', user=user, states=states)
+
+        fn.do_purchase(user['id'], product, vendor, cost, state_code, city_name, lat, lng)
+        flash(f'Compra de "{product}" por R${cost:.2f} realizada com sucesso!', 'success')
+        return redirect(url_for('purchases'))
+
+    return render_template('checkout.html', user=user, states=states)
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# PURCHASES HISTORY
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route('/purchases')
+def purchases():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    user    = fn.get_user(session['user'])
+    history = fn.get_purchase_history(user['id'])
+    return render_template('purchases.html', user=user, history=history)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route('/api/cities/<state_code>')
+def api_cities(state_code):
+    return jsonify(get_cities(state_code.upper()))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ACCOUNT FLAGS
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.route('/unflag', methods=['POST'])
+def unflag():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    fn.do_unflag_account(session['user'])
+    flash('Conta desbloqueada com sucesso.', 'success')
+    return redirect(url_for('dashboard'))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ENTRY POINT
+# ─────────────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
-    init_db()
-    # host='0.0.0.0' makes the server reachable from any device on your LAN
+    fn.init_db()
+    fn.migrate_passwords()
     app.run(host='0.0.0.0', port=5000, debug=True)

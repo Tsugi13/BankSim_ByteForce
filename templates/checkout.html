@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ByteBank — Checkout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@200;300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #000; --surface: #0a0a0a; --border: #1a1a1a; --border-c: rgba(0,212,255,0.18);
+      --cyan:    #00d4ff; --cyan-dim: #006680; --text: #d8f0ff; --muted: #3a5a6a;
+      --error:   #ff4d6a; --success: #00ffaa; --purple: #a78bfa;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Exo 2', sans-serif; min-height: 100vh; }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 60px; border-bottom: 1px solid var(--border);
+      background: #000; position: sticky; top: 0; z-index: 100;
+    }
+    nav::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg,var(--cyan) 0%,transparent 40%); opacity:0.3; }
+    .nav-logo { display:flex; align-items:center; gap:12px; }
+    .nav-logo svg { width:34px; height:34px; }
+    .nav-logo-name { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; }
+    .nav-logo-name em { color:var(--cyan); font-style:normal; }
+    .nav-right { display:flex; align-items:center; gap:16px; }
+    .nav-link { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:0.13em; text-transform:uppercase; color:var(--muted); text-decoration:none; border:1px solid var(--border); padding:6px 14px; transition:color 0.2s,border-color 0.2s; }
+    .nav-link:hover, .nav-link.active { color:var(--cyan); border-color:var(--border-c); }
+
+    main { max-width: 700px; margin: 0 auto; padding: 48px 24px 80px; }
+
+    .page-header { margin-bottom: 36px; animation: fadeUp 0.5s ease both; }
+    h1 { font-family:'Rajdhani',sans-serif; font-size:34px; font-weight:600; letter-spacing:0.04em; }
+    h1 em { color:var(--purple); font-style:normal; }
+    .page-sub { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted); margin-top:8px; letter-spacing:0.1em; }
+
+    .flash { padding:10px 16px; font-size:12px; border-left:2px solid; margin-bottom:16px; font-family:'Share Tech Mono',monospace; letter-spacing:0.03em; line-height:1.7; }
+    .flash.error   { background:rgba(255,77,106,0.07); color:var(--error);   border-color:var(--error); }
+    .flash.success { background:rgba(0,255,170,0.06);  color:var(--success); border-color:var(--success); }
+
+    /* Fraud info box */
+    .fraud-info {
+      background: rgba(167,139,250,0.05);
+      border: 1px solid rgba(167,139,250,0.2);
+      border-left: 2px solid var(--purple);
+      padding: 16px 20px; margin-bottom: 28px;
+      animation: fadeUp 0.5s 0.05s ease both;
+    }
+    .fraud-info-title { font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:600; color:var(--purple); letter-spacing:0.08em; margin-bottom:4px; }
+    .fraud-info-text  { font-family:'Share Tech Mono',monospace; font-size:10px; color:rgba(167,139,250,0.6); line-height:1.7; letter-spacing:0.04em; }
+
+    /* Form card */
+    .form-card {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 36px 36px 32px; position: relative;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+    .form-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,var(--purple),transparent); }
+    .form-card .c { position:absolute; width:14px; height:14px; border-color:var(--purple); border-style:solid; opacity:0.6; }
+    .form-card .c.tl { top:-1px; left:-1px;   border-width:2px 0 0 2px; }
+    .form-card .c.br { bottom:-1px; right:-1px; border-width:0 2px 2px 0; }
+
+    .row-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .field { margin-bottom:22px; }
+
+    label { display:block; font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
+
+    input[type="text"], input[type="number"], select {
+      width:100%; background:#000; border:1px solid var(--border);
+      color:var(--text); padding:11px 14px;
+      font-family:'Exo 2',sans-serif; font-size:14px;
+      outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance:none; -moz-appearance:none; appearance:none;
+    }
+    input[type="number"] { -moz-appearance:textfield; }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; }
+    input:focus, select:focus { border-color:var(--cyan-dim); box-shadow:0 0 14px rgba(0,212,255,0.1); }
+    input::placeholder { color:#1a2a30; font-size:13px; }
+
+    /* Custom select arrow */
+    .select-wrap { position:relative; }
+    .select-wrap::after { content:'▾'; position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:12px; pointer-events:none; }
+    select option { background:#0a0a0a; color:var(--text); }
+    select:disabled { opacity:0.4; cursor:not-allowed; }
+
+    .section-label {
+      font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:0.22em;
+      text-transform:uppercase; color:var(--purple); margin-bottom:18px; margin-top:4px;
+      padding-bottom:8px; border-bottom:1px solid rgba(167,139,250,0.15);
+    }
+
+    .balance-hint {
+      font-family:'Share Tech Mono',monospace; font-size:11px;
+      color:var(--muted); margin-bottom:28px;
+    }
+    .balance-hint span { color:var(--cyan); }
+
+    .btn-submit {
+      width:100%; padding:13px; background:transparent;
+      border:1px solid var(--purple); color:var(--purple);
+      font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:600;
+      letter-spacing:0.2em; text-transform:uppercase; cursor:pointer;
+      position:relative; overflow:hidden; transition:color 0.28s, box-shadow 0.28s;
+      margin-top:8px;
+    }
+    .btn-submit::before { content:''; position:absolute; inset:0; background:var(--purple); transform:translateX(-102%); transition:transform 0.32s cubic-bezier(0.16,1,0.3,1); z-index:0; }
+    .btn-submit:hover { color:#000; box-shadow:0 0 28px rgba(167,139,250,0.25); }
+    .btn-submit:hover::before { transform:translateX(0); }
+    .btn-submit span { position:relative; z-index:1; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+    @media(max-width:560px){ .row-2{grid-template-columns:1fr;} nav{padding:0 20px;} main{padding:28px 16px 60px;} .form-card{padding:28px 22px 24px;} }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <svg viewBox="0 0 50 50" fill="none">
+      <defs><filter id="g"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="g2"><feGaussianBlur stdDeviation="3"/></filter></defs>
+      <rect x="1" y="1" width="48" height="48" rx="7" fill="#020c18" stroke="#00d4ff" stroke-width="1"/>
+      <line x1="1" y1="25" x2="10" y2="25" stroke="#00d4ff" stroke-width="0.7" opacity="0.4"/>
+      <line x1="40" y1="25" x2="49" y2="25" stroke="#00d4ff" stroke-width="0.7" opacity="0.4"/>
+      <line x1="25" y1="1" x2="25" y2="10" stroke="#00d4ff" stroke-width="0.7" opacity="0.4"/>
+      <line x1="25" y1="40" x2="25" y2="49" stroke="#00d4ff" stroke-width="0.7" opacity="0.4"/>
+      <text x="25" y="32" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="19" font-weight="700" fill="#00d4ff" opacity="0.2" filter="url(#g2)">BB</text>
+      <text x="25" y="32" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="19" font-weight="700" fill="#00d4ff" filter="url(#g)">BB</text>
+    </svg>
+    <div class="nav-logo-name"><em>Byte</em>Bank</div>
+  </div>
+  <div class="nav-right">
+    <a href="/dashboard" class="nav-link">Dashboard</a>
+    <a href="/purchases" class="nav-link">Compras</a>
+    <a href="/checkout"  class="nav-link active">Checkout</a>
+    <a href="/logout"    class="nav-link">[ sair ]</a>
+  </div>
+</nav>
+
+<main>
+  <div class="page-header">
+    <h1>Nova <em>Compra</em></h1>
+    <p class="page-sub">&gt; verificação_antifraude_ativa // haversine_distance_check</p>
+  </div>
+
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="flash {{ category }}">{{ message }}</div>
+  {% endfor %}
+
+  <div class="fraud-info">
+    <div class="fraud-info-title">⚡ Sistema Antifraude Ativo</div>
+    <div class="fraud-info-text">
+      Cada compra é verificada contra as últimas 5 transações da sua conta.<br>
+      Se a distância geográfica for maior que 500 km, a compra será bloqueada automaticamente e a conta sinalizada.
+    </div>
+  </div>
+
+  <div class="form-card">
+    <span class="c tl"></span><span class="c br"></span>
+
+    <form method="POST" action="/checkout">
+      <div class="section-label">// dados_do_produto</div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Produto / Serviço</label>
+          <input type="text" name="product" placeholder="Ex: Notebook Dell" required/>
+        </div>
+        <div class="field">
+          <label>Loja / Vendedor</label>
+          <input type="text" name="vendor" placeholder="Ex: Kabum" required/>
+        </div>
+      </div>
+
+      <div class="field" style="max-width:240px;">
+        <label>Custo (R$)</label>
+        <input type="number" name="cost" placeholder="0.00" min="0.01" step="0.01" required/>
+      </div>
+
+      <div class="balance-hint">
+        Saldo disponível: <span>R$ {{ "%.2f"|format(user.bal) }}</span>
+      </div>
+
+      <div class="section-label">// localização_da_compra</div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Estado</label>
+          <div class="select-wrap">
+            <select name="state" id="state-select" required>
+              <option value="">Selecione o estado</option>
+              {% for code, name in states %}
+                <option value="{{ code }}">{{ name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Cidade</label>
+          <div class="select-wrap">
+            <select name="city" id="city-select" required disabled>
+              <option value="">Selecione o estado primeiro</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit"><span>Confirmar Compra</span></button>
+    </form>
+  </div>
+</main>
+
+<script>
+  const stateSelect = document.getElementById('state-select');
+  const citySelect  = document.getElementById('city-select');
+
+  stateSelect.addEventListener('change', async () => {
+    const code = stateSelect.value;
+    citySelect.disabled = true;
+    citySelect.innerHTML = '<option value="">Carregando...</option>';
+
+    if (!code) {
+      citySelect.innerHTML = '<option value="">Selecione o estado primeiro</option>';
+      return;
+    }
+
+    const res    = await fetch(`/api/cities/${code}`);
+    const cities = await res.json();
+
+    citySelect.innerHTML = '<option value="">Selecione a cidade</option>';
+    cities.forEach(city => {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = city;
+      citySelect.appendChild(opt);
+    });
+    citySelect.disabled = false;
+  });
+</script>
+
+</body>
+</html>

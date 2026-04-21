@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ByteBank — Histórico de Compras</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@200;300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#000; --surface:#0a0a0a; --border:#1a1a1a; --border-c:rgba(0,212,255,0.15);
+      --cyan:#00d4ff; --text:#d8f0ff; --muted:#3a5a6a; --soft:#8aafbf;
+      --purple:#a78bfa; --success:#00ffaa;
+    }
+    body { background:var(--bg); color:var(--text); font-family:'Exo 2',sans-serif; min-height:100vh; }
+
+    nav {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 40px; height:60px; border-bottom:1px solid var(--border);
+      background:#000; position:sticky; top:0; z-index:100;
+    }
+    nav::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg,var(--cyan) 0%,transparent 40%); opacity:0.3; }
+    .nav-logo { display:flex; align-items:center; gap:12px; }
+    .nav-logo svg { width:34px; height:34px; }
+    .nav-logo-name { font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; }
+    .nav-logo-name em { color:var(--cyan); font-style:normal; }
+    .nav-right { display:flex; align-items:center; gap:16px; }
+    .nav-link { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:0.13em; text-transform:uppercase; color:var(--muted); text-decoration:none; border:1px solid var(--border); padding:6px 14px; transition:color 0.2s,border-color 0.2s; }
+    .nav-link:hover, .nav-link.active { color:var(--cyan); border-color:var(--border-c); }
+
+    main { max-width:900px; margin:0 auto; padding:48px 24px 80px; }
+
+    .page-header { margin-bottom:36px; animation:fadeUp 0.5s ease both; }
+    h1 { font-family:'Rajdhani',sans-serif; font-size:34px; font-weight:600; letter-spacing:0.04em; }
+    h1 em { color:var(--purple); font-style:normal; }
+    .page-sub { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted); margin-top:8px; letter-spacing:0.1em; }
+
+    /* Summary strip */
+    .summary {
+      display:flex; gap:0; margin-bottom:28px;
+      border:1px solid var(--border); background:var(--surface);
+      animation:fadeUp 0.5s 0.05s ease both;
+    }
+    .summary-item { padding:20px 28px; border-right:1px solid var(--border); }
+    .summary-item:last-child { border-right:none; }
+    .s-key { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:0.2em; color:var(--muted); text-transform:uppercase; margin-bottom:6px; }
+    .s-val { font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:600; color:var(--text); }
+    .s-val.cyan   { color:var(--cyan); }
+    .s-val.purple { color:var(--purple); }
+
+    /* Table */
+    .table-wrap { animation:fadeUp 0.5s 0.1s ease both; overflow-x:auto; }
+
+    table { width:100%; border-collapse:collapse; }
+
+    thead tr {
+      border-bottom:1px solid rgba(0,212,255,0.15);
+    }
+    thead th {
+      font-family:'Share Tech Mono',monospace; font-size:9px;
+      letter-spacing:0.2em; text-transform:uppercase; color:var(--muted);
+      padding:12px 16px; text-align:left; font-weight:400;
+    }
+
+    tbody tr {
+      border-bottom:1px solid var(--border);
+      transition:background 0.15s;
+    }
+    tbody tr:hover { background:var(--surface); }
+
+    tbody td {
+      padding:16px 16px; font-size:13px; color:var(--text); vertical-align:middle;
+    }
+
+    .td-product { font-weight:500; }
+    .td-vendor  { color:var(--soft); font-size:12px; }
+    .td-cost    { font-family:'Share Tech Mono',monospace; color:var(--cyan); font-size:14px; white-space:nowrap; }
+    .td-loc     { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted); }
+    .td-date    { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted); white-space:nowrap; }
+
+    /* Empty state */
+    .empty {
+      text-align:center; padding:80px 20px;
+      animation:fadeUp 0.5s 0.1s ease both;
+    }
+    .empty-icon { font-size:48px; margin-bottom:16px; opacity:0.3; }
+    .empty-title { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:400; color:var(--muted); margin-bottom:8px; }
+    .empty-sub { font-family:'Share Tech Mono',monospace; font-size:11px; color:#1a3a4a; }
+
+    .btn-checkout {
+      display:inline-block; margin-top:24px;
+      padding:11px 28px; border:1px solid var(--purple); color:var(--purple);
+      font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:600;
+      letter-spacing:0.16em; text-transform:uppercase; text-decoration:none;
+      position:relative; overflow:hidden; transition:color 0.25s;
+    }
+    .btn-checkout::before { content:''; position:absolute; inset:0; background:var(--purple); transform:translateX(-102%); transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); z-index:0; }
+    .btn-checkout:hover { color:#000; }
+    .btn-checkout:hover::before { transform:translateX(0); }
+    .btn-checkout span { position:relative; z-index:1; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+    @media(max-width:560px){ nav{padding:0 20px;} main{padding:28px 16px 60px;} .summary{flex-direction:column;} .summary-item{border-right:none;border-bottom:1px solid var(--border);} }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <svg viewBox="0 0 50 50" fill="none">
+      <defs><filter id="g"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="g2"><feGaussianBlur stdDeviation="3"/></filter></defs>
+      <rect x="1" y="1" width="48" height="48" rx="7" fill="#020c18" stroke="#00d4ff" stroke-width="1"/>
+      <line x1="1" y1="25" x2="10" y2="25" stroke="#00d4ff" stroke-width="0.7" opacity="0.4"/>
+      <line x1="40" y1="25" x2="49" y2="25" stroke="#00d4ff" stroke-width="0.7" opacity="0.4"/>
+      <line x1="25" y1="1" x2="25" y2="10" stroke="#00d4ff" stroke-width="0.7" opacity="0.4"/>
+      <line x1="25" y1="40" x2="25" y2="49" stroke="#00d4ff" stroke-width="0.7" opacity="0.4"/>
+      <text x="25" y="32" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="19" font-weight="700" fill="#00d4ff" opacity="0.2" filter="url(#g2)">BB</text>
+      <text x="25" y="32" text-anchor="middle" font-family="Rajdhani, sans-serif" font-size="19" font-weight="700" fill="#00d4ff" filter="url(#g)">BB</text>
+    </svg>
+    <div class="nav-logo-name"><em>Byte</em>Bank</div>
+  </div>
+  <div class="nav-right">
+    <a href="/dashboard" class="nav-link">Dashboard</a>
+    <a href="/purchases" class="nav-link active">Compras</a>
+    <a href="/checkout"  class="nav-link">Checkout</a>
+    <a href="/logout"    class="nav-link">[ sair ]</a>
+  </div>
+</nav>
+
+<main>
+  <div class="page-header">
+    <h1>Histórico de <em>Compras</em></h1>
+    <p class="page-sub">&gt; extrato_completo // {{ history|length }} transação(ões) encontrada(s)</p>
+  </div>
+
+  {% if history %}
+    <div class="summary">
+      <div class="summary-item">
+        <div class="s-key">Total de compras</div>
+        <div class="s-val purple">{{ history|length }}</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-key">Total gasto</div>
+        <div class="s-val cyan">R$ {{ "%.2f"|format(history | sum(attribute='cost')) }}</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-key">Última compra</div>
+        <div class="s-val" style="font-size:16px; color:var(--soft);">{{ history[0].purchased_at }}</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Produto</th>
+            <th>Loja</th>
+            <th>Valor</th>
+            <th>Localização</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in history %}
+          <tr>
+            <td style="color:var(--muted); font-family:'Share Tech Mono',monospace; font-size:11px;">{{ loop.index }}</td>
+            <td class="td-product">{{ p.product }}</td>
+            <td class="td-vendor">{{ p.vendor }}</td>
+            <td class="td-cost">R$ {{ "%.2f"|format(p.cost) }}</td>
+            <td class="td-loc">{{ p.city }}, {{ p.state }}</td>
+            <td class="td-date">{{ p.purchased_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <div class="empty">
+      <div class="empty-icon">🛒</div>
+      <div class="empty-title">Nenhuma compra registrada</div>
+      <div class="empty-sub">// histórico_vazio // realize sua primeira compra</div>
+      <a href="/checkout" class="btn-checkout"><span>Ir para Checkout</span></a>
+    </div>
+  {% endif %}
+</main>
+
+</body>
+</html>
