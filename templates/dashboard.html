@@ -98,7 +98,11 @@
       display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 20px;
     }
     .balance-label { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
-    .balance-amount { font-family: 'Rajdhani', sans-serif; font-size: 58px; font-weight: 300; line-height: 1; }
+    .balance-amount {
+      font-family: 'Rajdhani', sans-serif; font-size: 58px; font-weight: 300; line-height: 1;
+      word-break: break-all; overflow-wrap: anywhere;
+      font-size: clamp(24px, 5vw, 58px);
+    }
     .balance-amount .cur { font-size: 22px; color: var(--cyan); vertical-align: super; margin-right: 4px; font-weight: 500; }
     .balance-meta { display: flex; gap: 28px; margin-top: 16px; flex-wrap: wrap; }
     .meta-key { font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
@@ -240,10 +244,10 @@
   <div class="balance-card">
     <div>
       <div class="balance-label">// Saldo disponível</div>
-      <div class="balance-amount"><span class="cur">R$</span>{{ "%.2f"|format(user.bal) }}</div>
+      <div class="balance-amount"><span class="cur">R$</span>{{ "{:,.2f}".format(user.bal).replace(",", "X").replace(".", ",").replace("X", ".") }}</div>
       <div class="balance-meta">
         <div><div class="meta-key">Titular</div><div class="meta-val">{{ user.name }}</div></div>
-        <div><div class="meta-key">Limite de Crédito</div><div class="meta-val">R$ {{ "%.2f"|format(user.cred_lim) }}</div></div>
+        <div><div class="meta-key">Limite de Crédito</div><div class="meta-val">R$ {{ "{:,.2f}".format(user.cred_lim).replace(",", "X").replace(".", ",").replace("X", ".") }}</div></div>
         <div>
           <div class="meta-key">Status</div>
           <div class="meta-val" style="color: {% if user.flagged %}#ffb800{% else %}#00ffaa{% endif %}">
@@ -271,11 +275,6 @@
   <div class="actions">
     <div class="action-card withdraw">
       <div class="top-line"></div>
-      <div class="action-icon">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M9 3v12M4 10l5 5 5-5" stroke="#ff6b35" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
       <div class="action-title">Sacar</div>
       <p class="action-sub">// retirar_fundos</p>
       <form method="POST" action="/withdraw">
@@ -286,11 +285,6 @@
 
     <div class="action-card deposit">
       <div class="top-line"></div>
-      <div class="action-icon">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M9 15V3M4 8l5-5 5 5" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
       <div class="action-title">Depositar</div>
       <p class="action-sub">// adicionar_fundos</p>
       <form method="POST" action="/deposit">
@@ -301,11 +295,11 @@
 
     <div class="action-card checkout" style="grid-column: 1 / -1;">
       <div class="top-line"></div>
-      <div class="action-icon">
+      <a href="/checkout" class="action-icon">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <path d="M2 2h2l2.4 8.4M6 14a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm8 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0zm-7.6-2h9.2l1.4-6H4.4" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-      </div>
+      </a>
       <div class="action-title">Nova Compra</div>
       <p class="action-sub">// iniciar_checkout // verificação_antifraude_ativa</p>
       <a href="/checkout" class="btn-nav-link"><span>Ir para Checkout →</span></a>

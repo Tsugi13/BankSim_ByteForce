@@ -142,7 +142,7 @@
       </div>
       <div class="summary-item">
         <div class="s-key">Total gasto</div>
-        <div class="s-val cyan">R$ {{ "%.2f"|format(history | sum(attribute='cost')) }}</div>
+        <div class="s-val cyan">R$ {{ "{:,.2f}".format(history | sum(attribute='cost')).replace(",", "X").replace(".", ",").replace("X", ".") }}</div>
       </div>
       <div class="summary-item">
         <div class="s-key">Última compra</div>
@@ -168,7 +168,7 @@
             <td style="color:var(--muted); font-family:'Share Tech Mono',monospace; font-size:11px;">{{ loop.index }}</td>
             <td class="td-product">{{ p.product }}</td>
             <td class="td-vendor">{{ p.vendor }}</td>
-            <td class="td-cost">R$ {{ "%.2f"|format(p.cost) }}</td>
+            <td class="td-cost">R$ {{ "{:,.2f}".format(p.cost).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
             <td class="td-loc">{{ p.city }}, {{ p.state }}</td>
             <td class="td-date">{{ p.purchased_at }}</td>
           </tr>

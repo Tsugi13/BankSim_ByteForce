@@ -128,7 +128,7 @@ def do_withdraw(name: str, amount: float) -> tuple[bool, str]:
             return False, 'Saldo insuficiente.'
         conn.execute("UPDATE clients SET bal = bal - ? WHERE name=?", (amount, name))
         conn.commit()
-    return True, f'Saque de R${amount:.2f} realizado com sucesso!'
+    return True, f'Saque de R${amount:,.2f} realizado com sucesso!'.replace(',', 'X').replace('.', ',').replace('X', '.')
 
 
 def do_deposit(name: str, amount: float) -> tuple[bool, str]:
@@ -141,7 +141,7 @@ def do_deposit(name: str, amount: float) -> tuple[bool, str]:
     with get_conn() as conn:
         conn.execute("UPDATE clients SET bal = bal + ? WHERE name=?", (amount, name))
         conn.commit()
-    return True, f'Depósito de R${amount:.2f} realizado com sucesso!'
+    return True, f'Depósito de R${amount:,.2f} realizado com sucesso!'.replace(',', 'X').replace('.', ',').replace('X', '.')
 
 
 def do_flag_account(client_id: int):
